@@ -14,7 +14,7 @@ import "../css/app.scss";
 //
 import "phoenix_html";
 
-import React from "react";
+import React, { useState } from "react";
 import { render } from "react-dom";
 import { LiveDataProvider, useLiveData } from "@live-data/hooks";
 // import { LiveDataSocket, LiveData } from "@live-data/core";
@@ -28,23 +28,45 @@ const Providers = (props) => {
   return <LiveDataProvider>{props.children}</LiveDataProvider>;
 };
 
-const App = () => {
-  const [state, dispatch] = useLiveData("App");
+const Counter = () => {
+  const [state, dispatch] = useLiveData("App", { counter: 0 });
   console.log(state);
 
-  if (state == null) {
-    return <div>Loading...</div>;
-  }
+  return (
+    <div>
+      <h1>{state.counter}</h1>
+      <button
+        onClick={() => {
+          dispatch("inc", {});
+        }}
+      >
+        Inc
+      </button>
+      <button
+        onClick={() => {
+          dispatch("dec", {});
+        }}
+      >
+        Dec
+      </button>
+    </div>
+  );
+};
+
+const App = () => {
+  const [hidden, setHidden] = useState(false);
 
   return (
-    <h1
-      onClick={() => {
-        dispatch("click", { key: "WHOAAA" });
-      }}
-    >
-      {" "}
-      {JSON.stringify(state)}
-    </h1>
+    <div>
+      <button
+        onClick={() => {
+          setHidden(!hidden);
+        }}
+      >
+        {hidden ? "show" : "hide"}
+      </button>
+      {hidden ? null : <Counter />}
+    </div>
   );
 };
 

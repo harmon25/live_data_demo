@@ -1,32 +1,18 @@
 defmodule LiveDataDemoWeb.LiveData.AppState do
   use LiveData, endpoint: LiveDataDemoWeb.Endpoint
 
+  @valid_tabs ~w(counter chat)
+
   def init(_) do
     {:ok,
      %{
-       counter: 0
+       active_tab: "counter"
      }}
   end
 
-  #  api?
-  #
-  # def handle_mount(state) do
-  # {:ok, state}
-  # end
-  # def handle_unmount(state) do
-  #  :ok
-  # end
-  #
-  # def handle_action({"inc", _}, state) do
-  #   {:ok, %{state | counter: state.counter + 1}}
-  # end
-
-  def handle_call({"inc", _}, _from, state) do
-    {:reply, :ok, %{state | counter: state.counter + 1}}
-  end
-
-  def handle_call({"dec", _}, _from, state) do
-    {:reply, :ok, %{state | counter: state.counter - 1}}
+  def handle_call({"change_tab", %{"newTab" => new_tab}}, _from, state)
+      when new_tab in @valid_tabs do
+    {:reply, :ok, %{state | active_tab: new_tab}}
   end
 
   def serialize(state) do

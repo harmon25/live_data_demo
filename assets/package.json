@@ -7,11 +7,12 @@
     "watch": "webpack --mode development --watch"
   },
   "dependencies": {
+    "localforage": "^1.9.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "@live-data/hooks": "file:../../@live-data/hooks",
-    "phoenix": "file:../deps/phoenix",
-    "phoenix_html": "file:../deps/phoenix_html"
+    "reactjs-popup": "^2.0.4",
+    "phoenix": "^1.5.5",
+    "@live-data/core": "file:../../live_data"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",

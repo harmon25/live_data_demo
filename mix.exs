@@ -42,7 +42,8 @@ defmodule LiveDataDemo.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:live_data, path: "../live_data"}
+      {:live_data, path: "../live_data"},
+      {:observable_gen, path: "../observable_gen"}
     ]
   end
 

@@ -10,9 +10,13 @@ defmodule LiveDataDemo.Application do
       # Start the Telemetry supervisor
       LiveDataDemoWeb.Telemetry,
       # Start the PubSub system
+
       {Phoenix.PubSub, name: LiveDataDemo.PubSub},
+
       # Start the Endpoint (http/https)
+      # LiveData.Supervisor,
       LiveDataDemoWeb.Endpoint
+
       # Start a worker by calling: LiveDataDemo.Worker.start_link(arg)
       # {LiveDataDemo.Worker, arg}
     ]

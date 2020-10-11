@@ -20,6 +20,9 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# used to map a reducer/data key to observable_gen_server to launch
+config :live_data, module_mapper: %{"App" => LiveDataDemoWeb.LiveData.App2}
+
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 

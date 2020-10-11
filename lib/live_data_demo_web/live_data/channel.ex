@@ -45,13 +45,14 @@ defmodule LiveData.Channel do
     {:noreply, socket}
   end
 
-  defp load_csrf_token(endpoint, socket_session) do
-    if token = socket_session["_csrf_token"] do
-      state = Plug.CSRFProtection.dump_state_from_session(token)
-      secret_key_base = endpoint.config(:secret_key_base)
-      Plug.CSRFProtection.load_state(secret_key_base, state)
-    end
-  end
+  # not using this - but idea is from liveview
+  # defp load_csrf_token(endpoint, socket_session) do
+  #   if token = socket_session["_csrf_token"] do
+  #     state = Plug.CSRFProtection.dump_state_from_session(token)
+  #     secret_key_base = endpoint.config(:secret_key_base)
+  #     Plug.CSRFProtection.load_state(secret_key_base, state)
+  #   end
+  # end
 
   defp get_name(id) do
     {:global, "ld_store_#{id}"}

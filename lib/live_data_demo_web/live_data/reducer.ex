@@ -1,4 +1,16 @@
 defmodule LiveData.Reducer do
+  @moduledoc """
+  Reducer module
+
+  A reducer is a module that implements action/2 and default_state/1 callbacks.
+
+  action/2 takes an action_arg and state - and returns a new state.
+
+  Can be used on its own, or combined into a RootReducer.
+
+  This module also implements persistence for the state in the form of an agent which is the context in which the action and default_state callbacks are executed.
+  """
+
   @type action :: atom()
   @type payload :: map()
   @type action_arg :: {action, payload}
@@ -13,12 +25,7 @@ defmodule LiveData.Reducer do
   defmacro __using__(_opts) do
     quote do
       defmodule AgentStore do
-        @parent __MODULE__
-                |> to_string
-                |> String.split(".")
-                |> Enum.drop(-1)
-                |> Enum.join(".")
-                |> String.to_atom()
+        @parent Module.split(__MODULE__) |> Enum.drop(-1) |> Module.concat()
 
         use Agent
 

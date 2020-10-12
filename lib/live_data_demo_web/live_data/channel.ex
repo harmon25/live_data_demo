@@ -24,8 +24,7 @@ defmodule LiveData.Channel do
     end
   end
 
-  def handle_info({:after_join, user_id, _default_state}, socket) do
-    # might want to do deferent stuff if
+  def handle_info({:after_join, user_id}, socket) do
     pid =
       LiveData.Store.start_link(user_id)
       |> case do

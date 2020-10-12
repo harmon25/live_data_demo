@@ -12,8 +12,6 @@ defmodule LiveDataDemoWeb.LiveData.Socket do
   """
   @impl Phoenix.Socket
   def connect(_params, socket, connect_info) do
-    IO.inspect(connect_info)
-    IO.inspect(socket.endpoint)
     {:ok, put_in(socket.private[:connect_info], connect_info)}
   end
 

@@ -9,10 +9,14 @@ defmodule LiveData.Store do
 
   @type store_state :: map()
 
-  def start(id, context \\ %{}, callback \\ fn(old, new, _context) ->
-  IO.inspect(old, label: "old state")
-  IO.inspect(new, label: "new state")
-   end) do
+  def start(
+        id,
+        context \\ %{},
+        callback \\ fn old, new, _context ->
+          IO.inspect(old, label: "old state")
+          IO.inspect(new, label: "new state")
+        end
+      ) do
     name = "ld_store_#{id}"
 
     GenServer.start(__MODULE__, [id, context, callback], name: {:global, name})
@@ -30,7 +34,15 @@ defmodule LiveData.Store do
   @impl GenServer
   def init([id, context, callback]) do
     # channel pids is a list - as this user could be connected via different sockets
-    {:ok, %{super_pid: nil, id: id, channel_pids: [], children: [], context: context, callback: callback }, {:continue, "ld_store_super_#{id}"}}
+    {:ok,
+     %{
+       super_pid: nil,
+       id: id,
+       channel_pids: [],
+       children: [],
+       context: context,
+       callback: callback
+     }, {:continue, "ld_store_super_#{id}"}}
   end
 
   @impl GenServer
@@ -56,29 +68,32 @@ defmodule LiveData.Store do
   @impl GenServer
   def handle_info({:__live_data_init__, nil}, %{super_pid: super_pid, context: context} = state) do
     Logger.debug("Init store for #{state.id}!")
+
     # for now will be statically defining reducer structure in config.exs - but this could be moved into some macro?
 
-    to_launch = Application.get_env(:live_data_demo, :reducer)
-     |> case do
-      nil ->
-        # throw "No :reducer configuration in :live_data application env. "
-        Logger.error("No :reducer configuration in :live_data application env. stopping... ")
-        {:stop, :normal, state}
-      reducer ->
-        # init the root reducer - and the reduce the results into something useful
-          reducer.action({:init, nil }, nil, context)
-          |> Enum.reduce([], fn({k, red}, agents) ->
-            [{k, red } | agents]
+    to_launch =
+      Application.get_env(:live_data_demo, :reducer)
+      |> case do
+        nil ->
+          # throw "No :reducer configuration in :live_data application env. "
+          Logger.error("No :reducer configuration in :live_data application env. stopping... ")
+          {:stop, :normal, state}
+
+        reducer ->
+          # init the root reducer - and the reduce the results into something useful
+          reducer.action({:init, nil}, nil, context)
+          |> Enum.reduce([], fn {k, red}, agents ->
+            [{k, red} | agents]
           end)
-     end
+      end
 
     children =
-       to_launch
-     |> Enum.map(fn {k,v} ->
-      Logger.info("starting #{k} agent")
-     {:ok, pid} = DynamicSupervisor.start_child(super_pid,  Module.concat([v, AgentStore]) )
-     {k, v, pid}
-    end)
+      to_launch
+      |> Enum.map(fn {k, v} ->
+        Logger.info("starting #{k} agent")
+        {:ok, pid} = DynamicSupervisor.start_child(super_pid, Module.concat([v, AgentStore]))
+        {k, v, pid}
+      end)
 
     dispatch(self(), {:init, nil})
     {:noreply, %{state | children: children}}
@@ -108,12 +123,15 @@ defmodule LiveData.Store do
   end
 
   @impl GenServer
-  def handle_cast({:dispatch, action}, %{children: children, context: context, callback: callback} = state) do
+  def handle_cast(
+        {:dispatch, action},
+        %{children: children, context: context, callback: callback} = state
+      ) do
     # enumerate the child, reducers - and apply this reduction
     # each reducion is executed inside an agent so this should be concurrent.
     old_state = do_get_state(children)
 
-    Enum.each(children, fn ({_k, mod, pid})->
+    Enum.each(children, fn {_k, mod, pid} ->
       LiveData.Reducer.reduce(pid, mod, action, context)
     end)
 
@@ -163,9 +181,8 @@ defmodule LiveData.Store do
     GenServer.call(pid, :get_state)
   end
 
-
   defp do_get_state(children) do
-    Enum.into(children, %{}, fn ({k, _mod, pid})->
+    Enum.into(children, %{}, fn {k, _mod, pid} ->
       {k, LiveData.Reducer.value(pid)}
     end)
   end

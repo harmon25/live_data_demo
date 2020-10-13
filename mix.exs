@@ -42,7 +42,7 @@ defmodule LiveDataDemo.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:live_data,  git: "https://github.com/harmon25/live_data.git", branch: "add_js_package" }
+      {:live_data, git: "https://github.com/harmon25/live_data.git", branch: "add_js_package"}
       # {:observable_gen, path: "../observable_gen"}
     ]
   end

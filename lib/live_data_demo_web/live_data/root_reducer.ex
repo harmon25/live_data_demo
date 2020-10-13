@@ -5,8 +5,8 @@ defmodule LiveDataDemo.RootReducer do
 
   def default_state() do
     %{
-      counter: LiveDataDemo.CounterReducer,
-     }
+      counter: LiveDataDemo.CounterReducer
+    }
   end
 
   def default_state(existing) do

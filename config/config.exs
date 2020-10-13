@@ -26,7 +26,6 @@ config :live_data, module_mapper: %{"App" => LiveDataDemoWeb.LiveData.App2}
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-
 config :live_data_demo, :reducer, LiveDataDemo.RootReducer
 
 # Import environment specific config. This must remain at the bottom

@@ -21,7 +21,7 @@ defmodule LiveData.Reducer do
 
   @spec reduce(reducer_agent, atom, store_context) :: :ok
   def reduce(pid, module, action, context \\ %{}) do
-    Agent.cast(pid, &(apply(module, :action, [action, &1, context])))
+    Agent.cast(pid, &apply(module, :action, [action, &1, context]))
   end
 
   defmacro __using__(_opts) do
@@ -32,9 +32,12 @@ defmodule LiveData.Reducer do
       @type payload :: map()
       @type action_arg :: {action, payload}
       @type state :: any()
+      @type reducer :: module()
 
       @callback key() :: atom()
-      @callback action(action :: action_arg(), state :: state(), context :: store_context()) :: state()
+      @callback children() :: [module()]
+      @callback action(action :: action_arg(), state :: state(), context :: store_context()) ::
+                  state()
       @callback default_state() :: state()
       @callback default_state(existing_state :: state()) :: state()
 
@@ -44,6 +47,7 @@ defmodule LiveData.Reducer do
         @parent Module.split(__MODULE__) |> Enum.drop(-1) |> Module.concat()
 
         use Agent
+
         def start_link([]) do
           Agent.start_link(fn -> @parent.default_state() end)
         end

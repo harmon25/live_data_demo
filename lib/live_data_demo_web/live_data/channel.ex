@@ -28,20 +28,20 @@ defmodule LiveData.Channel do
 
   @impl Phoenix.Channel
   def handle_in("dispatch", %{"type" => action_type, "payload" => payload}, socket) do
-   store = get_store_name(socket)
-   # grab state before dispatching...
-  #  old_state = LiveData.Store.get_state(store)
-   # dispatch action against store
-   LiveData.Store.dispatch(store, {String.to_existing_atom(action_type), payload})
-   # grab state again.
-  #  new_state = LiveData.Store.get_state(store)
-  #  broadcast!(socket, "diff", %{diff: JSONDiff.diff(old_state, new_state) })
-   {:reply, :ok , socket}
+    store = get_store_name(socket)
+    # grab state before dispatching...
+    #  old_state = LiveData.Store.get_state(store)
+    # dispatch action against store
+    LiveData.Store.dispatch(store, {String.to_existing_atom(action_type), payload})
+    # grab state again.
+    #  new_state = LiveData.Store.get_state(store)
+    #  broadcast!(socket, "diff", %{diff: JSONDiff.diff(old_state, new_state) })
+    {:reply, :ok, socket}
   end
 
   def handle_in("current_state", _, socket) do
-     store = get_store_name(socket)
-     {:reply, {:ok, LiveData.Store.get_state(store)}, socket}
+    store = get_store_name(socket)
+    {:reply, {:ok, LiveData.Store.get_state(store)}, socket}
   end
 
   @impl Phoenix.Channel
@@ -61,7 +61,7 @@ defmodule LiveData.Channel do
           pid
       end
 
-      Logger.debug("Store at pid: #{inspect(pid)}")
+    Logger.debug("Store at pid: #{inspect(pid)}")
 
     # send channel pid over to newly started LD Server...
     send(pid, {:__live_data_monitor__, self()})
@@ -78,10 +78,8 @@ defmodule LiveData.Channel do
   #   end
   # end
 
-
   # grabs store name from the socket.
   defp get_store_name(socket) do
     {:global, "ld_store_#{socket.assigns.user_id}"}
   end
-
 end

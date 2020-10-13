@@ -2,6 +2,7 @@ defmodule LiveData.Channel do
   use Phoenix.Channel
   require Logger
 
+  @impl Phoenix.Channel
   def join("ld:" <> token, params, socket) do
     # IO.inspect(key, label: "Joined!")
     # IO.inspect(params, label: "join params")
@@ -25,17 +26,17 @@ defmodule LiveData.Channel do
     end
   end
 
-
+  @impl Phoenix.Channel
   def handle_in("dispatch", %{"type" => action_type, "payload" => payload}, socket) do
    store = get_store_name(socket)
    # grab state before dispatching...
-   old_state = LiveData.Store.get_state(store)
+  #  old_state = LiveData.Store.get_state(store)
    # dispatch action against store
    LiveData.Store.dispatch(store, {String.to_existing_atom(action_type), payload})
    # grab state again.
-   new_state = LiveData.Store.get_state(store)
-   broadcast!(socket, "diff", %{diff: JSONDiff.diff(old_state, new_state) })
-   {:noreply, socket}
+  #  new_state = LiveData.Store.get_state(store)
+  #  broadcast!(socket, "diff", %{diff: JSONDiff.diff(old_state, new_state) })
+   {:reply, :ok , socket}
   end
 
   def handle_in("current_state", _, socket) do
@@ -43,11 +44,12 @@ defmodule LiveData.Channel do
      {:reply, {:ok, LiveData.Store.get_state(store)}, socket}
   end
 
+  @impl Phoenix.Channel
   def handle_info({:after_join, user_id}, socket) do
     # am launching this store without any supervison? - kinda just floating in the beam
     # because of the stateful nature - live_data should probably be its own :application that can have its own supervison tree, so the store can be launched supervised.
     pid =
-      LiveData.Store.start(user_id)
+      LiveData.Store.start(user_id, %{socket: socket})
       |> case do
         {:ok, :new, pid} ->
           # the second param - could be some persisted client side state?
@@ -76,11 +78,10 @@ defmodule LiveData.Channel do
   #   end
   # end
 
+
+  # grabs store name from the socket.
   defp get_store_name(socket) do
     {:global, "ld_store_#{socket.assigns.user_id}"}
   end
 
-  defp get_name(id) do
-    {:global, "ld_store_#{id}"}
-  end
 end

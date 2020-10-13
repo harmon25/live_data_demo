@@ -9,10 +9,13 @@ defmodule LiveData.Store do
 
   @type store_state :: map()
 
-  def start(id, context \\ %{}) do
+  def start(id, context \\ %{}, callback \\ fn(old, new, _context) ->
+  IO.inspect(old, label: "old state")
+  IO.inspect(new, label: "new state")
+   end) do
     name = "ld_store_#{id}"
 
-    GenServer.start(__MODULE__, [id, context], name: {:global, name})
+    GenServer.start(__MODULE__, [id, context, callback], name: {:global, name})
     |> case do
       {:ok, pid} ->
         Logger.debug("Launched new #{__MODULE__}: #{name}")
@@ -25,9 +28,9 @@ defmodule LiveData.Store do
   end
 
   @impl GenServer
-  def init([id, context]) do
+  def init([id, context, callback]) do
     # channel pids is a list - as this user could be connected via different sockets
-    {:ok, %{super_pid: nil, id: id, channel_pids: [], children: [], context: context }, {:continue, "ld_store_super_#{id}"}}
+    {:ok, %{super_pid: nil, id: id, channel_pids: [], children: [], context: context, callback: callback }, {:continue, "ld_store_super_#{id}"}}
   end
 
   @impl GenServer
@@ -105,22 +108,25 @@ defmodule LiveData.Store do
   end
 
   @impl GenServer
-  def handle_cast({:dispatch, action}, %{children: children, context: context} = state) do
+  def handle_cast({:dispatch, action}, %{children: children, context: context, callback: callback} = state) do
     # enumerate the child, reducers - and apply this reduction
     # each reducion is executed inside an agent so this should be concurrent.
+    old_state = do_get_state(children)
+
     Enum.each(children, fn ({_k, mod, pid})->
       LiveData.Reducer.reduce(pid, mod, action, context)
     end)
+
+    new_state = do_get_state(children)
+    # run the callback.
+    callback.(old_state, new_state, context)
 
     {:noreply, state}
   end
 
   @impl GenServer
   def handle_call(:get_state, _from, %{children: children} = state) do
-    current_state =
-      Enum.into(children, %{}, fn ({k, _mod, pid})->
-        {k, LiveData.Reducer.value(pid)}
-      end)
+    current_state = do_get_state(children)
 
     {:reply, current_state, state}
   end
@@ -155,5 +161,12 @@ defmodule LiveData.Store do
   @spec get_state(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_state(pid) do
     GenServer.call(pid, :get_state)
+  end
+
+
+  defp do_get_state(children) do
+    Enum.into(children, %{}, fn ({k, _mod, pid})->
+      {k, LiveData.Reducer.value(pid)}
+    end)
   end
 end

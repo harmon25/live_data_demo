@@ -1,5 +1,6 @@
 defmodule LiveData.Channel do
   use Phoenix.Channel
+  require Logger
 
   def join("ld:" <> token, params, socket) do
     # IO.inspect(key, label: "Joined!")
@@ -24,9 +25,30 @@ defmodule LiveData.Channel do
     end
   end
 
+
+  def handle_in("dispatch", %{"type" => action_type, "payload" => payload}, socket) do
+   store = get_store_name(socket)
+   # grab state before dispatching...
+   old_state = LiveData.Store.get_state(store)
+   # dispatch action against store
+   LiveData.Store.dispatch(store, {String.to_existing_atom(action_type), payload})
+
+   # grab state again.
+   new_state = LiveData.Store.get_state(store)
+   # reply with a diff - could be empty array.
+   {:reply, {:ok, %{"diff" => JSONDiff.diff(old_state, new_state)}}, socket}
+  end
+
+  def handle_in("current_state", _, socket) do
+     store = get_store_name(socket)
+     {:reply, {:ok, LiveData.Store.get_state(store)}, socket}
+  end
+
   def handle_info({:after_join, user_id}, socket) do
+    # am launching this store without any supervison? - kinda just floating in the beam
+    # because of the stateful nature - live_data should probably be its own :application that can have its own supervison tree, so the store can be launched supervised.
     pid =
-      LiveData.Store.start_link(user_id)
+      LiveData.Store.start(user_id)
       |> case do
         {:ok, :new, pid} ->
           # the second param - could be some persisted client side state?
@@ -37,6 +59,8 @@ defmodule LiveData.Channel do
           # store already existed - does not neeed initalization...
           pid
       end
+
+      Logger.debug("Store at pid: #{inspect(pid)}")
 
     # send channel pid over to newly started LD Server...
     send(pid, {:__live_data_monitor__, self()})
@@ -52,6 +76,10 @@ defmodule LiveData.Channel do
   #     Plug.CSRFProtection.load_state(secret_key_base, state)
   #   end
   # end
+
+  defp get_store_name(socket) do
+    {:global, "ld_store_#{socket.assigns.user_id}"}
+  end
 
   defp get_name(id) do
     {:global, "ld_store_#{id}"}

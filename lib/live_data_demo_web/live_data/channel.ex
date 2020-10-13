@@ -32,11 +32,10 @@ defmodule LiveData.Channel do
    old_state = LiveData.Store.get_state(store)
    # dispatch action against store
    LiveData.Store.dispatch(store, {String.to_existing_atom(action_type), payload})
-
    # grab state again.
    new_state = LiveData.Store.get_state(store)
-   # reply with a diff - could be empty array.
-   {:reply, {:ok, %{"diff" => JSONDiff.diff(old_state, new_state)}}, socket}
+   broadcast!(socket, "diff", %{diff: JSONDiff.diff(old_state, new_state) })
+   {:noreply, socket}
   end
 
   def handle_in("current_state", _, socket) do
